@@ -1,0 +1,40 @@
+{
+  "name": "@nacho-labs/angular-grab-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for angular-grab — query grabbed elements from AI coding agents",
+  "author": "Nate Richardson",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "angular-grab-mcp": "./dist/index.js",
+    "angular-grab-webhook": "./dist/webhook-server.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "echo 'No tests yet'",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "chokidar": "^4.0.3"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nacho-labs-llc/angular-grab.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://angular-grab.com",
+  "bugs": "https://github.com/nacho-labs-llc/angular-grab/issues",
+  "keywords": ["angular", "angular-grab", "mcp", "model-context-protocol", "ai", "developer-tools"]
+}
