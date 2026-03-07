@@ -1,6 +1,6 @@
 {
   "name": "@nacho-labs/angular-grab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Grab any element in your Angular app and give it to AI coding agents",
   "author": "Nate Richardson",
   "license": "MIT",
@@ -47,17 +47,19 @@
     "./builder": {
       "require": "./dist/builder/index.js"
     },
+    "./dist/builder/builders/application/index": "./dist/builder/builders/application/index.js",
+    "./dist/builder/builders/dev-server/index": "./dist/builder/builders/dev-server/index.js",
     "./builders.json": "./builders.json",
     "./package.json": "./package.json"
   },
   "files": ["dist", "builders.json", "README.md"],
   "scripts": {
-    "prebuild": "cp ../../README.md .",
+    "prebuild": "node -e \"require('fs').copyFileSync('../../README.md','README.md')\"",
     "build": "tsup",
-    "postbuild": "mkdir -p dist/builder/builders/application dist/builder/builders/dev-server && cp src/builder/builders/application/schema.json dist/builder/builders/application/ && cp src/builder/builders/dev-server/schema.json dist/builder/builders/dev-server/ && echo '{\"type\":\"commonjs\"}' > dist/builder/package.json",
+    "postbuild": "node -e \"const fs=require('fs'),p=require('path');['application','dev-server'].forEach(b=>{const d=p.join('dist','builder','builders',b);fs.mkdirSync(d,{recursive:true});fs.copyFileSync(p.join('src','builder','builders',b,'schema.json'),p.join(d,'schema.json'))});fs.writeFileSync(p.join('dist','builder','package.json'),'{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "dev": "tsup --watch",
     "test": "vitest run",
-    "clean": "rm -rf dist README.md"
+    "clean": "node -e \"const fs=require('fs');['dist','README.md'].forEach(p=>{try{fs.rmSync(p,{recursive:true,force:true})}catch{}})\""
   },
   "peerDependencies": {
     "@angular/core": ">=19.0.0",
