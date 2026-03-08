@@ -18,6 +18,7 @@ import { createElementPicker } from './picker/element-picker';
 import { createKeyboardHandler, isMac } from './keyboard/keyboard-handler';
 import { copyElement, buildElementContext } from './clipboard/copy';
 import { createPluginRegistry } from './plugins/plugin-registry';
+import { createMcpWebhookPlugin } from './plugins/mcp-webhook-plugin';
 import { createThemeManager } from './toolbar/theme-manager';
 import { createToolbarRenderer } from './toolbar/toolbar-renderer';
 import { createHistoryPopover } from './toolbar/history-popover';
@@ -54,6 +55,7 @@ function getDefaultOptions(): AngularGrabOptions {
     devOnly: true,
     showToolbar: true,
     themeMode: 'dark',
+    mcpWebhook: true,
   };
 }
 
@@ -603,6 +605,10 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       updateToastOffset();
     }
   });
+
+  if (merged.mcpWebhook) {
+    api.registerPlugin(createMcpWebhookPlugin());
+  }
 
   return api;
 }

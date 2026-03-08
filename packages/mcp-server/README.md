@@ -107,7 +107,7 @@ Add to your Claude Desktop config:
 
 ```
 Browser (angular-grab)
-  → POST http://localhost:3456/grab
+  → built-in webhook plugin POSTs to http://localhost:3456/grab
   → saved to ~/.angular-grab/history.json
 
 AI agent (Claude, Cursor, etc.)
@@ -116,7 +116,11 @@ AI agent (Claude, Cursor, etc.)
   → returns results
 ```
 
-Both happen inside the same process. The MCP tools work even if port 3456 is already in use (e.g. multiple editor windows open) — only the webhook listener is affected.
+The webhook plugin is built into `@nacho-labs/angular-grab` and auto-registers when your app starts. No manual plugin setup needed. If the MCP server isn't running, the POST silently fails and copying still works normally.
+
+Both the MCP tools and webhook run inside the same server process. The MCP tools work even if port 3456 is already in use (e.g. multiple editor windows open) — only the webhook listener is affected.
+
+To disable the webhook plugin, pass `mcpWebhook: false` to `provideAngularGrab()`.
 
 ## MCP tools
 

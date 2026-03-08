@@ -51,6 +51,8 @@ export interface AngularGrabOptions {
   showToolbar: boolean;
   /** Theme mode for all UI. Default: 'dark' */
   themeMode: ThemeMode;
+  /** Auto-register MCP webhook plugin to POST grabs to localhost:3456. Default: true */
+  mcpWebhook: boolean;
 }
 
 export interface ComponentStackEntry {
