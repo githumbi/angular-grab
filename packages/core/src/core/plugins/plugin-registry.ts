@@ -70,11 +70,8 @@ export function createPluginRegistry(): PluginRegistry {
     },
 
     dispose(): void {
-      for (const [name] of plugins) {
-        const cleanup = cleanups.get(name);
-        if (cleanup) {
-          try { cleanup(); } catch { /* ignore */ }
-        }
+      for (const cleanup of cleanups.values()) {
+        try { cleanup(); } catch { /* ignore */ }
       }
       cleanups.clear();
       plugins.clear();

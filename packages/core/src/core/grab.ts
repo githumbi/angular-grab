@@ -73,7 +73,7 @@ function isDevMode(): boolean {
 }
 
 /** No-op API returned when devOnly is true and the app is in production. */
-function createNoopApi(): AngularGrabAPI {
+export function createNoopApi(): AngularGrabAPI {
   const noop = () => {};
   return {
     activate: noop,
@@ -363,7 +363,7 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
           cssClasses: entry.context.cssClasses,
         });
       } catch {
-        // clipboard write failed silently
+        showToast('Failed to copy to clipboard');
       }
     },
   });

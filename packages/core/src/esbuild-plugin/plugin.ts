@@ -18,11 +18,12 @@ export function angularGrabEsbuildPlugin(options?: {
 
       // Inject the source map as a global variable via banner
       const json = JSON.stringify(sourceMap);
-      const banner = build.initialOptions.banner || {};
-      const existing = typeof banner === 'object' ? (banner.js || '') : '';
+      const existingBanner = build.initialOptions.banner;
+      const bannerObj = typeof existingBanner === 'object' ? existingBanner : {};
+      const existingJs = bannerObj.js || '';
       build.initialOptions.banner = {
-        ...(typeof banner === 'object' ? banner : {}),
-        js: `globalThis.__ANGULAR_GRAB_SOURCE_MAP__=${json};${existing}`,
+        ...bannerObj,
+        js: `globalThis.__ANGULAR_GRAB_SOURCE_MAP__=${json};${existingJs}`,
       };
     },
   };

@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "angular-grab": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@nacho-labs/angular-grab-mcp@latest"]
+    },
+    "angular-grab-docker": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-p", "3456:3456",
+        "-v", "angular-grab-history:/data",
+        "ghcr.io/nacho-labs-llc/angular-grab-mcp:latest"
+      ]
+    }
+  }
+}

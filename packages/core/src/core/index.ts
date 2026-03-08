@@ -1,4 +1,4 @@
-export { init, createGrabInstance } from './grab';
+export { init, createNoopApi } from './grab';
 export { filterAngularClasses } from './utils';
 export type {
   AngularGrabOptions,

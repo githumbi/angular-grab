@@ -2,30 +2,30 @@
 
 > MCP server for angular-grab — query grabbed elements from AI coding agents
 
+<!-- Demo GIF placeholder: record a short screen capture showing a grab in the browser followed by an AI agent query returning the result, then replace this comment with: ![Demo: grabbing an element in the browser and querying it from an AI agent](./demo.gif) -->
+
 This MCP (Model Context Protocol) server lets AI coding agents like Claude Code, Cursor, and Windsurf access your angular-grab history. It runs a single process that provides both:
 
 - **MCP tools** over stdio for AI agent queries
 - **HTTP webhook** on port 3456 to receive grabs from the browser
 
-## Quick Setup
+## Quick setup
+
+Run this in your project root:
 
 ```bash
 npx @nacho-labs/angular-grab add mcp
 ```
 
-This auto-detects your editor and configures the MCP server. Restart your editor to activate.
+This writes the MCP server entry to `.mcp.json` in your project root — the standard config file that Claude Code, Cursor, Windsurf, and other MCP-compatible editors all read automatically. Commit this file so your teammates get the same setup.
 
-## Manual Setup
+Then **restart your editor** to activate the MCP connection.
 
-### Claude Code
+## Manual setup
 
-```bash
-claude mcp add angular-grab -- npx -y @nacho-labs/angular-grab-mcp@latest
-```
+### Project-scoped (recommended)
 
-### Cursor / Windsurf / Other Editors
-
-Add to `.mcp.json` in your project root:
+Add to `.mcp.json` in your project root. This works in Claude Code, Cursor, Windsurf, and any editor that supports the MCP standard:
 
 ```json
 {
@@ -39,9 +39,51 @@ Add to `.mcp.json` in your project root:
 }
 ```
 
+### Claude Code — global (all projects)
+
+To register it globally instead of per-project, use the Claude Code CLI:
+
+```bash
+claude mcp add angular-grab -- npx -y @nacho-labs/angular-grab-mcp@latest
+```
+
+This adds the server to your user-level Claude config rather than `.mcp.json`, so it's available in every project without needing the file.
+
+### Docker
+
+If you prefer to run the server in a container rather than via npx, add this to `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "angular-grab": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-p", "3456:3456",
+        "-v", "angular-grab-history:/data",
+        "ghcr.io/nacho-labs-llc/angular-grab-mcp:latest"
+      ]
+    }
+  }
+}
+```
+
+The `-v angular-grab-history:/data` flag uses a named Docker volume so history persists across container restarts without needing a host path. Create it once before first use:
+
+```bash
+docker volume create angular-grab-history
+```
+
+> **Note:** Only use one entry (`angular-grab` or `angular-grab-docker`) at a time. If both are registered, only one will bind port 3456 — the other will log a warning and continue serving MCP tools without receiving new grabs.
+
 ### Claude Desktop
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+Add to your Claude Desktop config:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -54,95 +96,64 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-### Environment Variables
+### Environment variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANGULAR_GRAB_HISTORY_PATH` | Path to angular-grab history file | `~/.angular-grab/history.json` |
-| `ANGULAR_GRAB_PORT` | Webhook server port | `3456` |
+| `ANGULAR_GRAB_HISTORY_PATH` | Path to the history file | `~/.angular-grab/history.json` |
+| `ANGULAR_GRAB_PORT` | Webhook listener port | `3456` |
 
-## How It Works
+## How it works
 
-1. **angular-grab** in the browser POSTs grabbed elements to the built-in webhook (`http://localhost:3456/grab`)
-2. The server saves grabs to `~/.angular-grab/history.json`
-3. **AI agents** query grab history via MCP tools over stdio
+```
+Browser (angular-grab)
+  → POST http://localhost:3456/grab
+  → saved to ~/.angular-grab/history.json
 
-## MCP Tools
+AI agent (Claude, Cursor, etc.)
+  → MCP tool call over stdio
+  → reads ~/.angular-grab/history.json
+  → returns results
+```
+
+Both happen inside the same process. The MCP tools work even if port 3456 is already in use (e.g. multiple editor windows open) — only the webhook listener is affected.
+
+## MCP tools
 
 ### `angular_grab_search`
 
-Search angular-grab history by text, component name, or file path.
+Search grab history by text, component name, or file path.
 
-**Parameters:**
-- `query` (optional): Search term (searches in HTML, component name, file path, selector)
-- `componentName` (optional): Filter by component name (partial match)
-- `filePath` (optional): Filter by file path (partial match)
-- `limit` (optional): Maximum results (default: 10)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `query` | string | Search term — matches HTML, component name, file path, selector |
+| `componentName` | string | Filter by component name (partial match) |
+| `filePath` | string | Filter by file path (partial match) |
+| `limit` | number | Max results (default: 10) |
 
 ### `angular_grab_recent`
 
-Get the most recent grabbed elements.
+Get the most recently grabbed elements.
 
-**Parameters:**
-- `limit` (optional): Number of results (default: 5)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | number | Number of results (default: 5) |
 
 ### `angular_grab_get`
 
-Get a specific grabbed element by ID.
+Get a single grab entry by ID.
 
-**Parameters:**
-- `id` (required): The grab entry ID
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | The grab entry ID |
 
 ### `angular_grab_stats`
 
-Get statistics about your angular-grab history (total grabs, unique components, unique files, recent activity).
+Summary of your grab history: total count, unique components, unique files, and activity in the last 24h / 7d.
 
-## Configuring angular-grab
+## Example usage
 
-Register a plugin that POSTs grabs to the webhook:
-
-```typescript
-import { Component, inject } from '@angular/core';
-import { ANGULAR_GRAB_API } from '@nacho-labs/angular-grab/angular';
-
-@Component({ /* ... */ })
-export class AppComponent {
-  constructor() {
-    const api = inject(ANGULAR_GRAB_API);
-    api.registerPlugin({
-      name: 'webhook',
-      hooks: {
-        onCopySuccess: (snippet, context) => {
-          fetch('http://localhost:3456/grab', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              html: context.html,
-              componentName: context.componentName,
-              filePath: context.filePath,
-              line: context.line,
-              column: context.column,
-              selector: context.selector,
-              cssClasses: context.cssClasses,
-              snippet,
-              componentStack: context.componentStack.map(c => ({
-                name: c.name,
-                filePath: c.filePath,
-                line: c.line,
-                column: c.column,
-              })),
-            }),
-          }).catch(() => {});
-        },
-      },
-    });
-  }
-}
-```
-
-## Example Usage with Claude
-
-Once configured, you can ask Claude:
+Once configured, you can ask your AI agent things like:
 
 - "Show me the last 5 elements I grabbed"
 - "Search my angular-grab history for button components"
@@ -150,4 +161,4 @@ Once configured, you can ask Claude:
 
 ## License
 
-MIT © Nate Richardson
+MIT © Nacho Labs

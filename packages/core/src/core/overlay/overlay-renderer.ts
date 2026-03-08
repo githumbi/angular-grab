@@ -120,9 +120,6 @@ export function createOverlayRenderer(): OverlayRenderer {
       labelLeft = Math.max(0, viewportWidth - labelRect.width);
       label.style.left = `${labelLeft}px`;
     }
-    if (labelLeft < 0) {
-      label.style.left = '0px';
-    }
   }
 
   function trackPosition(): void {

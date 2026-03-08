@@ -22,9 +22,13 @@ export interface KeyboardHandlerDeps {
   isActive: () => boolean;
 }
 
+interface NavigatorUAData {
+  platform: string;
+}
+
 export function isMac(): boolean {
   if (typeof navigator === 'undefined') return false;
-  const uaData = (navigator as any).userAgentData;
+  const uaData = (navigator as Navigator & { userAgentData?: NavigatorUAData }).userAgentData;
   if (uaData?.platform) return /mac/i.test(uaData.platform);
   return /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }

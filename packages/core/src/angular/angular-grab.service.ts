@@ -1,4 +1,4 @@
-import { init } from '../core';
+import { init, createNoopApi } from '../core';
 import type { AngularGrabAPI, AngularGrabOptions, Plugin } from '../core';
 import { resolveComponent } from './resolvers/component-resolver';
 import { resolveSource } from './resolvers/source-resolver';
@@ -17,7 +17,7 @@ export function initAngularGrab(options?: Partial<AngularGrabOptions>): AngularG
 
   // No-op in production
   if (options?.devOnly !== false && typeof ngDevMode !== 'undefined' && !ngDevMode) {
-    instance = createNoOpApi();
+    instance = createNoopApi();
     return instance;
   }
 
@@ -41,22 +41,3 @@ export function disposeAngularGrab(): void {
   instance = null;
 }
 
-function createNoOpApi(): AngularGrabAPI {
-  return {
-    activate() {},
-    deactivate() {},
-    toggle() {},
-    isActive() { return false; },
-    setOptions() {},
-    registerPlugin() {},
-    unregisterPlugin() {},
-    setComponentResolver() {},
-    setSourceResolver() {},
-    showToolbar() {},
-    hideToolbar() {},
-    setThemeMode() {},
-    getHistory() { return []; },
-    clearHistory() {},
-    dispose() {},
-  };
-}

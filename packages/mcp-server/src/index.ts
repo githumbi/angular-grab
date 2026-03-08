@@ -202,6 +202,19 @@ function startWebhookServer(port: number): void {
     });
   });
 
+  httpServer.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(
+        `[angular-grab] Port ${port} already in use. Webhook disabled — MCP tools still work, but new grabs won't be received.`
+      );
+      console.error(
+        `[angular-grab] To use a different port, set ANGULAR_GRAB_PORT env variable.`
+      );
+    } else {
+      console.error(`[angular-grab] Webhook server error:`, err);
+    }
+  });
+
   httpServer.listen(port, () => {
     console.error(`Webhook listener on http://localhost:${port}/grab`);
   });
@@ -332,10 +345,7 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'angular_grab_recent': {
         const { limit = 5 } = args as { limit?: number };
-        const sorted = [...history.entries].sort(
-          (a, b) => b.timestamp - a.timestamp
-        );
-        const recent = sorted.slice(0, Math.max(0, limit));
+        const recent = searchHistory(history, undefined, undefined, undefined, limit);
 
         return {
           content: [

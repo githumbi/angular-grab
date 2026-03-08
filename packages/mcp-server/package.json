@@ -1,6 +1,6 @@
 {
   "name": "@nacho-labs/angular-grab-mcp",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "MCP server for angular-grab — query grabbed elements from AI coding agents",
   "author": "Nate Richardson",
   "license": "MIT",

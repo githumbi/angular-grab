@@ -9,7 +9,7 @@ export function resolveComponent(element: Element): {
   if (!ng) return { name: null, hostElement: null, stack: [] };
 
   const stack: Array<{ name: string; hostElement: Element | null }> = [];
-  const seen = new Set<any>();
+  const seen = new Set<object>();
 
   // Walk up the DOM collecting every Angular component
   let current: Element | null = element;

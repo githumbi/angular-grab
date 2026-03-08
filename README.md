@@ -74,7 +74,7 @@ The output includes the cleaned HTML, the full Angular component stack trace, an
 - **Crosshair guidelines** during selection mode
 - **Zero production impact** -- automatically disabled outside dev mode
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Shortcut | Action |
 |----------|--------|
@@ -115,7 +115,7 @@ The floating toolbar provides quick access to all features without keyboard shor
 
 Dismissing the toolbar doesn't disable angular-grab -- keyboard shortcuts still work, and activating selection mode brings the toolbar back.
 
-## Plugin System
+## Plugin system
 
 ```typescript
 import { registerAngularGrabPlugin } from '@nacho-labs/angular-grab/angular';
@@ -136,7 +136,7 @@ registerAngularGrabPlugin({
 });
 ```
 
-### Plugin Hooks
+### Plugin hooks
 
 | Hook | Description |
 |------|-------------|
@@ -149,7 +149,7 @@ registerAngularGrabPlugin({
 | `onCopyError` | Copy failed |
 | `transformCopyContent` | Transform clipboard text before copying |
 
-### Plugin Theme Overrides
+### Plugin theme overrides
 
 ```typescript
 registerAngularGrabPlugin({
@@ -196,7 +196,7 @@ api.setThemeMode('light');
 | `clearHistory()` | Clear grab history |
 | `dispose()` | Clean up everything |
 
-## Subpath Exports
+## Subpath exports
 
 The `@nacho-labs/angular-grab` package provides subpath exports for different build tool integrations:
 
@@ -210,17 +210,25 @@ The `@nacho-labs/angular-grab` package provides subpath exports for different bu
 | `@nacho-labs/angular-grab/builder` | Angular CLI custom builders |
 | `@nacho-labs/angular-grab/global` | IIFE browser bundle |
 
-## MCP Server (AI Agent Integration)
+## MCP server (AI agent integration)
 
-Connect angular-grab to AI coding agents like Claude Code, Cursor, or Windsurf so they can query your grabbed elements directly:
+Connect angular-grab to AI coding agents like Claude Code, Cursor, or Windsurf so they can query your grabbed elements directly — no copy-pasting required.
+
+Run this in your project root:
 
 ```bash
 npx @nacho-labs/angular-grab add mcp
 ```
 
-This auto-detects your editor and configures the MCP server. After setup, your AI agent can access elements you've grabbed from the browser — no more copy-pasting.
+This writes a `.mcp.json` file to your project root. That file is the standard MCP config format read by Claude Code, Cursor, Windsurf, and other MCP-compatible editors. Commit it so teammates get the same setup, then restart your editor.
 
-See [@nacho-labs/angular-grab-mcp](./packages/mcp-server) for details.
+For a Claude Code global (user-level) install instead:
+
+```bash
+claude mcp add angular-grab -- npx -y @nacho-labs/angular-grab-mcp@latest
+```
+
+See [@nacho-labs/angular-grab-mcp](./packages/mcp-server) for the full setup guide, Docker option, and available MCP tools.
 
 ## License
 
