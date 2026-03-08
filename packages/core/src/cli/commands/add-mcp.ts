@@ -16,6 +16,22 @@ function success(msg: string): void {
   console.log(`\x1b[32m[angular-grab]\x1b[0m ${msg}`);
 }
 
+function getMcpServerEntry(): { type: string; command: string; args: string[] } {
+  const isWindows = process.platform === 'win32';
+  if (isWindows) {
+    return {
+      type: 'stdio',
+      command: 'cmd',
+      args: ['/c', 'npx', '-y', `${MCP_PACKAGE}@latest`],
+    };
+  }
+  return {
+    type: 'stdio',
+    command: 'npx',
+    args: ['-y', `${MCP_PACKAGE}@latest`],
+  };
+}
+
 export async function addMcp(): Promise<void> {
   log('Adding angular-grab MCP server...\n');
 
@@ -31,11 +47,7 @@ export async function addMcp(): Promise<void> {
   }
 
   const servers = (config.mcpServers as Record<string, unknown>) ?? {};
-  servers[MCP_SERVER_NAME] = {
-    type: 'stdio',
-    command: 'npx',
-    args: ['-y', `${MCP_PACKAGE}@latest`],
-  };
+  servers[MCP_SERVER_NAME] = getMcpServerEntry();
   config.mcpServers = servers;
 
   writeFileSync(mcpJsonPath, JSON.stringify(config, null, 2) + '\n');
@@ -46,5 +58,6 @@ export async function addMcp(): Promise<void> {
   console.log('  elements you grab from the browser.');
   console.log('');
   console.log('  \x1b[1mRestart your editor\x1b[0m to activate the MCP connection.');
+  console.log('  When prompted, \x1b[1mapprove the MCP server\x1b[0m in your editor.');
   console.log('');
 }

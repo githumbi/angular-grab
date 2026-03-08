@@ -2,8 +2,10 @@
   "mcpServers": {
     "angular-grab": {
       "type": "stdio",
-      "command": "npx",
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
         "-y",
         "@nacho-labs/angular-grab-mcp@latest"
       ]

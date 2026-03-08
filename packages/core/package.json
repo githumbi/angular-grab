@@ -1,6 +1,6 @@
 {
   "name": "@nacho-labs/angular-grab",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Grab any element in your Angular app and give it to AI coding agents",
   "author": "Nate Richardson",
   "license": "MIT",
