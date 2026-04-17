@@ -145,6 +145,14 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         text-decoration: underline;
         color: var(--ag-accent, #3b82f6);
       }
+      #${POPOVER_ID} .ag-history-comment {
+        font-size: 11px;
+        color: var(--ag-accent, #3b82f6);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -185,6 +193,9 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         html += `<div class="ag-history-info">`;
         html += `<div class="ag-history-selector">${selector}</div>`;
         if (meta) html += `<div class="ag-history-meta">${meta}</div>`;
+        if (entry.comment) {
+          html += `<div class="ag-history-comment">${escapeHtml(entry.comment)}</div>`;
+        }
         html += `</div>`;
         html += `<span class="ag-history-time">${time}</span>`;
         html += `</button>`;
