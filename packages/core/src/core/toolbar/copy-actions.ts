@@ -4,6 +4,13 @@ import { generateSnippet } from '../clipboard/generate-snippet';
 import { showToast } from '../overlay/toast';
 import { cleanAngularAttrs } from '../utils';
 
+const MAX_SNIPPET_CHARS = 2000;
+
+function truncateSnippet(text: string): string {
+  if (text.length <= MAX_SNIPPET_CHARS) return text;
+  return text.slice(0, MAX_SNIPPET_CHARS) + '\n... [truncated]';
+}
+
 export async function copyElementSnippet(
   context: ElementContext,
   maxLines: number,
@@ -13,6 +20,7 @@ export async function copyElementSnippet(
   if (pluginRegistry) {
     snippet = pluginRegistry.callTransformHook(snippet, context);
   }
+  snippet = truncateSnippet(snippet);
   const ok = await writeAndToast(snippet, 'Copied to clipboard', context);
   if (ok) pluginRegistry?.callHook('onCopySuccess', snippet, context, undefined);
   return ok;
@@ -22,7 +30,7 @@ export async function copyElementHtml(
   context: ElementContext,
   pluginRegistry?: PluginRegistry,
 ): Promise<boolean> {
-  const cleaned = cleanAngularAttrs(context.html);
+  const cleaned = truncateSnippet(cleanAngularAttrs(context.html));
   const ok = await writeAndToast(cleaned, 'HTML copied to clipboard', context);
   if (ok) pluginRegistry?.callHook('onCopySuccess', cleaned, context, undefined);
   return ok;
@@ -70,15 +78,16 @@ export async function copyWithComment(
   comment: string,
   maxLines: number,
   pluginRegistry?: PluginRegistry,
-): Promise<boolean> {
+): Promise<{ ok: boolean; full: string }> {
   let snippet = generateSnippet(context, maxLines);
   if (pluginRegistry) {
     snippet = pluginRegistry.callTransformHook(snippet, context);
   }
-  const full = `${snippet}\n\n/* Comment: ${comment} */`;
+  snippet = truncateSnippet(snippet);
+  const full = `/* Comment: ${comment} */\n\n${snippet}`;
   const ok = await writeAndToast(full, 'Copied with comment', context);
   if (ok) pluginRegistry?.callHook('onCopySuccess', full, context, comment);
-  return ok;
+  return { ok, full };
 }
 
 async function writeAndToast(text: string, message: string, context?: ElementContext): Promise<boolean> {
