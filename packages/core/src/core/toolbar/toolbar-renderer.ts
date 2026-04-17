@@ -13,6 +13,8 @@ export interface ToolbarCallbacks {
   onThemeToggle: () => void;
   onEnableToggle: () => void;
   onDismiss: () => void;
+  onCommentSubmit: (comment: string) => void;  // NEW
+  onCommentCancel: () => void;                  // NEW
 }
 
 export interface ToolbarRenderer {
@@ -21,6 +23,8 @@ export interface ToolbarRenderer {
   update(state: GrabState): void;
   isToolbarElement(el: Element): boolean;
   dispose(): void;
+  showCommentInput(): void;  // NEW
+  hideCommentInput(): void;  // NEW
 }
 
 export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRenderer {
@@ -28,6 +32,9 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
   let leftGroup: HTMLDivElement | null = null;
   let buttons: Record<string, HTMLButtonElement> = {};
   let allElements = new Set<Element>();
+  let commentInput: HTMLInputElement | null = null;
+  let commentRow: HTMLDivElement | null = null;
+  let commentKeyHandler: ((e: KeyboardEvent) => void) | null = null;
 
   function injectStyles(): void {
     if (document.getElementById(STYLE_ID)) return;
@@ -104,6 +111,39 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
         opacity: 0;
         pointer-events: none;
       }
+      #${TOOLBAR_ID} .ag-comment-row {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 0 2px;
+      }
+      #${TOOLBAR_ID}.ag-comment-mode .ag-comment-row {
+        display: flex;
+      }
+      #${TOOLBAR_ID}.ag-comment-mode .ag-toolbar-left,
+      #${TOOLBAR_ID}.ag-comment-mode > button {
+        display: none;
+      }
+      #${TOOLBAR_ID} .ag-comment-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        color: var(--ag-toolbar-text, #94a3b8);
+        font: 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        width: 200px;
+        padding: 4px 2px;
+      }
+      #${TOOLBAR_ID} .ag-comment-input::placeholder {
+        color: var(--ag-text-muted, #64748b);
+      }
+      #${TOOLBAR_ID} .ag-comment-input:focus {
+        color: var(--ag-popover-text, #e2e8f0);
+      }
+      #${TOOLBAR_ID} .ag-comment-hint {
+        font-size: 11px;
+        color: var(--ag-text-muted, #64748b);
+        white-space: nowrap;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -150,6 +190,24 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
     leftGroup.appendChild(buttons.actions);
     leftGroup.appendChild(buttons.freeze);
     leftGroup.appendChild(divider);
+
+    // Comment row (inline input mode)
+    commentInput = document.createElement('input');
+    commentInput.type = 'text';
+    commentInput.className = 'ag-comment-input';
+    commentInput.placeholder = 'Add a comment...';
+    commentInput.setAttribute('aria-label', 'Comment');
+
+    const commentHint = document.createElement('span');
+    commentHint.className = 'ag-comment-hint';
+    commentHint.textContent = '↵ save · Esc cancel';
+
+    commentRow = document.createElement('div');
+    commentRow.className = 'ag-comment-row';
+    commentRow.appendChild(commentInput);
+    commentRow.appendChild(commentHint);
+
+    container.appendChild(commentRow);
     container.appendChild(leftGroup);
     container.appendChild(buttons.theme);
     container.appendChild(buttons.enable);
@@ -162,8 +220,18 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
     allElements.add(container);
     allElements.add(leftGroup);
     allElements.add(divider);
+    allElements.add(commentRow);
+    allElements.add(commentInput);
+    allElements.add(commentHint);
     for (const btn of Object.values(buttons)) {
       allElements.add(btn);
+    }
+  }
+
+  function detachCommentKey(): void {
+    if (commentKeyHandler) {
+      document.removeEventListener('keydown', commentKeyHandler, true);
+      commentKeyHandler = null;
     }
   }
 
@@ -234,6 +302,42 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
       leftGroup = null;
       buttons = {};
       allElements.clear();
+      detachCommentKey();
+      commentInput = null;
+      commentRow = null;
+    },
+
+    showCommentInput(): void {
+      ensureContainer();
+      commentInput!.value = '';
+      container!.classList.add('ag-comment-mode');
+
+      commentKeyHandler = (e: KeyboardEvent) => {
+        if (document.activeElement !== commentInput) return;
+        e.stopImmediatePropagation();
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const comment = commentInput!.value.trim();
+          container!.classList.remove('ag-comment-mode');
+          detachCommentKey();
+          callbacks.onCommentSubmit(comment);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          container!.classList.remove('ag-comment-mode');
+          detachCommentKey();
+          callbacks.onCommentCancel();
+        }
+      };
+
+      document.addEventListener('keydown', commentKeyHandler, true);
+      requestAnimationFrame(() => commentInput?.focus());
+    },
+
+    hideCommentInput(): void {
+      container?.classList.remove('ag-comment-mode');
+      detachCommentKey();
+      commentInput?.blur();
     },
   };
 }
