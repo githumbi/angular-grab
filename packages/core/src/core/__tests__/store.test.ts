@@ -115,4 +115,41 @@ describe('createStore', () => {
     expect(receivedKey).toBe('frozen');
     expect(receivedState.frozen).toBe(true);
   });
+
+  it('HistoryEntry type allows optional comment field', () => {
+    const entry: import('../types').HistoryEntry = {
+      id: 'x',
+      context: {
+        html: '',
+        componentName: null,
+        filePath: null,
+        line: null,
+        column: null,
+        componentStack: [],
+        selector: 'div',
+        cssClasses: [],
+      },
+      snippet: '',
+      timestamp: 0,
+      comment: 'hello',
+    };
+    expect(entry.comment).toBe('hello');
+
+    const entryNoComment: import('../types').HistoryEntry = {
+      id: 'y',
+      context: {
+        html: '',
+        componentName: null,
+        filePath: null,
+        line: null,
+        column: null,
+        componentStack: [],
+        selector: 'div',
+        cssClasses: [],
+      },
+      snippet: '',
+      timestamp: 0,
+    };
+    expect(entryNoComment.comment).toBeUndefined();
+  });
 });

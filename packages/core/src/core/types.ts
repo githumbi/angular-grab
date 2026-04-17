@@ -23,6 +23,7 @@ export interface HistoryEntry {
   context: HistoryContext;
   snippet: string;
   timestamp: number;
+  comment?: string;
 }
 
 export interface ToolbarState {
