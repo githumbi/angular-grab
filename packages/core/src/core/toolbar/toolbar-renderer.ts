@@ -309,6 +309,7 @@ export function createToolbarRenderer(callbacks: ToolbarCallbacks): ToolbarRende
 
     showCommentInput(): void {
       ensureContainer();
+      detachCommentKey();
       commentInput!.value = '';
       container!.classList.add('ag-comment-mode');
 
