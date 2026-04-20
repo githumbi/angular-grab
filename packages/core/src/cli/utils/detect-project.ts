@@ -49,7 +49,7 @@ export function detectProject(angularJsonPath: string): ProjectInfo {
   const builder: string = buildTarget.builder || '';
   let builderType: ProjectInfo['builderType'];
 
-  if (builder.includes(':application') || builder.includes('@nacho-labs/angular-grab:application')) {
+  if (builder.includes(':application') || builder.includes('@githumbi/angular-grab:application')) {
     builderType = 'application';
   } else if (builder.includes(':browser-esbuild')) {
     builderType = 'browser-esbuild';

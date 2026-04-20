@@ -1,6 +1,6 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideAngularGrab } from '@nacho-labs/angular-grab/angular';
+import { provideAngularGrab } from '@githumbi/angular-grab/angular';
 
 import { routes } from './app.routes';
 

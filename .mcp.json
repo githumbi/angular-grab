@@ -7,7 +7,7 @@
         "/c",
         "npx",
         "-y",
-        "@nacho-labs/angular-grab-mcp@latest"
+        "@githumbi/angular-grab-mcp@latest"
       ]
     }
   }

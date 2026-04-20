@@ -1,8 +1,8 @@
 {
-  "name": "@nacho-labs/angular-grab",
-  "version": "1.0.4",
+  "name": "@githumbi/angular-grab",
+  "version": "1.0.0",
   "description": "Grab any element in your Angular app and give it to AI coding agents",
-  "author": "Nate Richardson",
+  "author": "Githumbi <githumbi74@gmail.com>",
   "license": "MIT",
   "type": "module",
   "publishConfig": {
@@ -90,10 +90,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nacho-labs-llc/angular-grab.git",
+    "url": "https://github.com/githumbi/angular-grab.git",
     "directory": "packages/core"
   },
-  "homepage": "https://angular-grab.com",
-  "bugs": "https://github.com/nacho-labs-llc/angular-grab/issues",
-  "keywords": ["angular", "angular-grab", "nacho-labs", "element-picker", "developer-tools", "ai", "esbuild", "vite", "webpack"]
+  "homepage": "https://github.com/githumbi/angular-grab",
+  "bugs": "https://github.com/githumbi/angular-grab/issues",
+  "keywords": ["angular", "angular-grab", "githumbi", "element-picker", "developer-tools", "ai", "esbuild", "vite", "webpack"]
 }

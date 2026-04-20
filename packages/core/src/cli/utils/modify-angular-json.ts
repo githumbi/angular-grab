@@ -17,7 +17,7 @@ export function modifyAngularJson(angularJsonPath: string, projectName: string):
       currentBuilder === '@angular/build:application' ||
       currentBuilder === '@angular-devkit/build-angular:application'
     ) {
-      buildTarget.builder = '@nacho-labs/angular-grab:application';
+      buildTarget.builder = '@githumbi/angular-grab:application';
       modified = true;
     }
   }
@@ -29,7 +29,7 @@ export function modifyAngularJson(angularJsonPath: string, projectName: string):
       currentBuilder === '@angular/build:dev-server' ||
       currentBuilder === '@angular-devkit/build-angular:dev-server'
     ) {
-      serveTarget.builder = '@nacho-labs/angular-grab:dev-server';
+      serveTarget.builder = '@githumbi/angular-grab:dev-server';
       modified = true;
     }
   }

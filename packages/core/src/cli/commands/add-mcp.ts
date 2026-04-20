@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const MCP_PACKAGE = '@nacho-labs/angular-grab-mcp';
+const MCP_PACKAGE = '@githumbi/angular-grab-mcp';
 const MCP_SERVER_NAME = 'angular-grab';
 
 function log(msg: string): void {

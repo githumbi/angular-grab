@@ -114,12 +114,12 @@ describe('detectProject', () => {
     expect(info.builderType).toBe('browser');
   });
 
-  it('detects @nacho-labs/angular-grab:application as "application"', () => {
+  it('detects @githumbi/angular-grab:application as "application"', () => {
     const path = writeAngularJson({
       projects: {
         app: {
           architect: {
-            build: { builder: '@nacho-labs/angular-grab:application' },
+            build: { builder: '@githumbi/angular-grab:application' },
           },
         },
       },

@@ -4,7 +4,7 @@ import { modifyAngularJson } from '../utils/modify-angular-json';
 import { modifyAppConfig } from '../utils/modify-app-config';
 import { addMcp } from './add-mcp';
 
-const PACKAGES = ['@nacho-labs/angular-grab'];
+const PACKAGES = ['@githumbi/angular-grab'];
 
 function log(msg: string): void {
   console.log(`\x1b[36m[angular-grab]\x1b[0m ${msg}`);
@@ -92,7 +92,7 @@ export async function init(): Promise<void> {
   } else {
     warn('  Could not modify app.config.ts (already configured or not found)');
     warn('  Please add manually:');
-    warn("    import { provideAngularGrab } from '@nacho-labs/angular-grab/angular';");
+    warn("    import { provideAngularGrab } from '@githumbi/angular-grab/angular';");
     warn('    // then add provideAngularGrab() to your providers array');
   }
 

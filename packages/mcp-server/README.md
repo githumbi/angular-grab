@@ -1,4 +1,4 @@
-# @nacho-labs/angular-grab-mcp
+# @githumbi/angular-grab-mcp
 
 > MCP server for angular-grab — query grabbed elements from AI coding agents
 
@@ -14,7 +14,7 @@ This MCP (Model Context Protocol) server lets AI coding agents like Claude Code,
 Run this in your project root:
 
 ```bash
-npx @nacho-labs/angular-grab add mcp
+npx @githumbi/angular-grab add mcp
 ```
 
 This writes the MCP server entry to `.mcp.json` in your project root — the standard config file that Claude Code, Cursor, Windsurf, and other MCP-compatible editors all read automatically. Commit this file so your teammates get the same setup.
@@ -33,7 +33,7 @@ Add to `.mcp.json` in your project root. This works in Claude Code, Cursor, Wind
     "angular-grab": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@nacho-labs/angular-grab-mcp@latest"]
+      "args": ["-y", "@githumbi/angular-grab-mcp@latest"]
     }
   }
 }
@@ -44,7 +44,7 @@ Add to `.mcp.json` in your project root. This works in Claude Code, Cursor, Wind
 To register it globally instead of per-project, use the Claude Code CLI:
 
 ```bash
-claude mcp add angular-grab -- npx -y @nacho-labs/angular-grab-mcp@latest
+claude mcp add angular-grab -- npx -y @githumbi/angular-grab-mcp@latest
 ```
 
 This adds the server to your user-level Claude config rather than `.mcp.json`, so it's available in every project without needing the file.
@@ -63,7 +63,7 @@ If you prefer to run the server in a container rather than via npx, add this to 
         "run", "--rm", "-i",
         "-p", "3456:3456",
         "-v", "angular-grab-history:/data",
-        "ghcr.io/nacho-labs-llc/angular-grab-mcp:latest"
+        "ghcr.io/githumbi/angular-grab-mcp:latest"
       ]
     }
   }
@@ -90,7 +90,7 @@ Add to your Claude Desktop config:
   "mcpServers": {
     "angular-grab": {
       "command": "npx",
-      "args": ["-y", "@nacho-labs/angular-grab-mcp@latest"]
+      "args": ["-y", "@githumbi/angular-grab-mcp@latest"]
     }
   }
 }
@@ -116,7 +116,7 @@ AI agent (Claude, Cursor, etc.)
   → returns results
 ```
 
-The webhook plugin is built into `@nacho-labs/angular-grab` and auto-registers when your app starts. No manual plugin setup needed. If the MCP server isn't running, the POST silently fails and copying still works normally.
+The webhook plugin is built into `@githumbi/angular-grab` and auto-registers when your app starts. No manual plugin setup needed. If the MCP server isn't running, the POST silently fails and copying still works normally.
 
 Both the MCP tools and webhook run inside the same server process. The MCP tools work even if port 3456 is already in use (e.g. multiple editor windows open) — only the webhook listener is affected.
 
@@ -165,4 +165,4 @@ Once configured, you can ask your AI agent things like:
 
 ## License
 
-MIT © Nacho Labs
+MIT

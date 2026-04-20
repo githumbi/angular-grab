@@ -7,19 +7,19 @@ Point at any element and press **Cmd+C** (Mac) or **Ctrl+C** (Windows/Linux) to 
 ## Install
 
 ```bash
-npx @nacho-labs/angular-grab init
+npx @githumbi/angular-grab init
 ```
 
 Or manually:
 
 ```bash
-npm install @nacho-labs/angular-grab
+npm install @githumbi/angular-grab
 ```
 
 Then add the provider to your app config:
 
 ```typescript
-import { provideAngularGrab } from '@nacho-labs/angular-grab/angular';
+import { provideAngularGrab } from '@githumbi/angular-grab/angular';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -34,10 +34,10 @@ And update `angular.json` to use the angular-grab builders:
 {
   "architect": {
     "build": {
-      "builder": "@nacho-labs/angular-grab:application"
+      "builder": "@githumbi/angular-grab:application"
     },
     "serve": {
-      "builder": "@nacho-labs/angular-grab:dev-server"
+      "builder": "@githumbi/angular-grab:dev-server"
     }
   }
 }
@@ -118,7 +118,7 @@ Dismissing the toolbar doesn't disable angular-grab -- keyboard shortcuts still 
 ## Plugin system
 
 ```typescript
-import { registerAngularGrabPlugin } from '@nacho-labs/angular-grab/angular';
+import { registerAngularGrabPlugin } from '@githumbi/angular-grab/angular';
 
 registerAngularGrabPlugin({
   name: 'my-plugin',
@@ -169,7 +169,7 @@ Access the API programmatically via Angular's dependency injection:
 
 ```typescript
 import { inject } from '@angular/core';
-import { ANGULAR_GRAB_API } from '@nacho-labs/angular-grab/angular';
+import { ANGULAR_GRAB_API } from '@githumbi/angular-grab/angular';
 
 const api = inject(ANGULAR_GRAB_API);
 api.activate();
@@ -198,17 +198,17 @@ api.setThemeMode('light');
 
 ## Subpath exports
 
-The `@nacho-labs/angular-grab` package provides subpath exports for different build tool integrations:
+The `@githumbi/angular-grab` package provides subpath exports for different build tool integrations:
 
 | Import | Description |
 |--------|-------------|
-| `@nacho-labs/angular-grab` | Core picker engine and types |
-| `@nacho-labs/angular-grab/angular` | Angular integration (providers, services, resolvers) |
-| `@nacho-labs/angular-grab/esbuild` | esbuild plugin for source location injection |
-| `@nacho-labs/angular-grab/vite` | Vite plugin for source location injection |
-| `@nacho-labs/angular-grab/webpack` | Webpack plugin for source location injection |
-| `@nacho-labs/angular-grab/builder` | Angular CLI custom builders |
-| `@nacho-labs/angular-grab/global` | IIFE browser bundle |
+| `@githumbi/angular-grab` | Core picker engine and types |
+| `@githumbi/angular-grab/angular` | Angular integration (providers, services, resolvers) |
+| `@githumbi/angular-grab/esbuild` | esbuild plugin for source location injection |
+| `@githumbi/angular-grab/vite` | Vite plugin for source location injection |
+| `@githumbi/angular-grab/webpack` | Webpack plugin for source location injection |
+| `@githumbi/angular-grab/builder` | Angular CLI custom builders |
+| `@githumbi/angular-grab/global` | IIFE browser bundle |
 
 ## MCP server (AI agent integration)
 
@@ -217,7 +217,7 @@ Connect angular-grab to AI coding agents like Claude Code, Cursor, or Windsurf s
 Run this in your project root:
 
 ```bash
-npx @nacho-labs/angular-grab add mcp
+npx @githumbi/angular-grab add mcp
 ```
 
 This writes a `.mcp.json` file to your project root. That file is the standard MCP config format read by Claude Code, Cursor, Windsurf, and other MCP-compatible editors. Commit it so teammates get the same setup, then restart your editor.
@@ -225,10 +225,10 @@ This writes a `.mcp.json` file to your project root. That file is the standard M
 For a Claude Code global (user-level) install instead:
 
 ```bash
-claude mcp add angular-grab -- npx -y @nacho-labs/angular-grab-mcp@latest
+claude mcp add angular-grab -- npx -y @githumbi/angular-grab-mcp@latest
 ```
 
-See [@nacho-labs/angular-grab-mcp](./packages/mcp-server) for the full setup guide, Docker option, and available MCP tools.
+See [@githumbi/angular-grab-mcp](./packages/mcp-server) for the full setup guide, Docker option, and available MCP tools.
 
 ## License
 

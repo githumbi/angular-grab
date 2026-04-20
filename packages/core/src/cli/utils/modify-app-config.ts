@@ -11,7 +11,7 @@ export function modifyAppConfig(projectRoot: string, sourceRoot: string): boolea
   if (content.includes('provideAngularGrab')) return false;
 
   // Add import for provideAngularGrab
-  const importStatement = "import { provideAngularGrab } from '@nacho-labs/angular-grab/angular';";
+  const importStatement = "import { provideAngularGrab } from '@githumbi/angular-grab/angular';";
 
   // Find the last import block end by matching `from '...'` or `from "..."` lines
   const lines = content.split('\n');

@@ -29,7 +29,7 @@
     "@angular/forms": "^21.1.0",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
-    "@nacho-labs/angular-grab": "workspace:*",
+    "@githumbi/angular-grab": "workspace:*",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
