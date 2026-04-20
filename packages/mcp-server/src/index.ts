@@ -14,9 +14,62 @@ import type { GrabEntry, GrabHistory } from './types.js';
 
 const DEFAULT_HISTORY_PATH = join(homedir(), '.angular-grab', 'history.json');
 const DEFAULT_WEBHOOK_PORT = 3456;
+const DEFAULT_WEBHOOK_HOST = '127.0.0.1';
+
+// Payload caps — defence against oversized / adversarial grabs that would flow
+// into the agent's context window as indirect prompt-injection material.
+const MAX_HTML_LEN = 100_000;
+const MAX_SNIPPET_LEN = 200_000;
+const MAX_STRING_LEN = 2_000;
+const MAX_STACK_DEPTH = 64;
+const MAX_CSS_CLASSES = 128;
+
+// Rate limit per remote IP (token bucket, reset every 60s)
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 60;
+const rateBuckets = new Map<string, { count: number; reset: number }>();
 
 let historyPath = DEFAULT_HISTORY_PATH;
 let cachedHistory: GrabHistory | null = null;
+
+function isLoopbackOrigin(origin: string | undefined): boolean {
+  if (!origin) return false;
+  try {
+    const u = new URL(origin);
+    const host = u.hostname;
+    return (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '[::1]' ||
+      host === '::1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function sanitizeForLog(value: unknown): string {
+  const s = typeof value === 'string' ? value : JSON.stringify(value);
+  // Strip control chars (including newline / ANSI escape intro) to prevent log-injection
+  return s.replace(/[\x00-\x1f\x7f]/g, '?').slice(0, 200);
+}
+
+function truncateString(v: unknown, max: number): string {
+  if (typeof v !== 'string') return '';
+  return v.length > max ? v.slice(0, max) : v;
+}
+
+function nullableString(v: unknown, max: number): string | null {
+  if (v == null) return null;
+  if (typeof v !== 'string') return null;
+  return v.length > max ? v.slice(0, max) : v;
+}
+
+function safeInt(v: unknown): number | null {
+  if (typeof v !== 'number' || !Number.isFinite(v) || !Number.isInteger(v)) return null;
+  if (v < 0 || v > 1_000_000_000) return null;
+  return v;
+}
 
 async function ensureHistoryFile(): Promise<void> {
   try {
@@ -127,14 +180,32 @@ function formatEntry(entry: GrabEntry) {
 
 // ── HTTP server (receives grabs from browser) ──
 
-function startWebhookServer(port: number): void {
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const bucket = rateBuckets.get(ip);
+  if (!bucket || bucket.reset < now) {
+    rateBuckets.set(ip, { count: 1, reset: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (bucket.count >= RATE_LIMIT_MAX) return false;
+  bucket.count++;
+  return true;
+}
+
+function startWebhookServer(port: number, host: string): void {
   const httpServer = createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    const origin = req.headers.origin as string | undefined;
+    // Only echo CORS back to loopback origins — blocks arbitrary websites from
+    // posting grabs while the browser is making the request.
+    if (isLoopbackOrigin(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin!);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
 
     if (req.method === 'OPTIONS') {
-      res.writeHead(204);
+      res.writeHead(isLoopbackOrigin(origin) ? 204 : 403);
       res.end();
       return;
     }
@@ -142,6 +213,30 @@ function startWebhookServer(port: number): void {
     if (req.method !== 'POST' || req.url !== '/grab') {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Not found' }));
+      return;
+    }
+
+    // Block non-loopback origins (when set). Requests without an Origin header
+    // are allowed because non-browser clients (curl, extensions sending grabs
+    // from the same page without a cross-origin request) do not set one.
+    if (origin !== undefined && !isLoopbackOrigin(origin)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Forbidden origin' }));
+      return;
+    }
+
+    // Only accept JSON bodies — rejects text/plain simple-CORS abuse vectors.
+    const ct = (req.headers['content-type'] || '').toString().toLowerCase();
+    if (!ct.startsWith('application/json')) {
+      res.writeHead(415, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Unsupported Media Type' }));
+      return;
+    }
+
+    const ip = req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip)) {
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Too many requests' }));
       return;
     }
 
@@ -166,36 +261,56 @@ function startWebhookServer(port: number): void {
       try {
         const data = JSON.parse(body);
 
-        if (!data.html || !data.componentName) {
+        if (typeof data !== 'object' || data === null) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Body must be a JSON object' }));
+          return;
+        }
+
+        if (typeof data.html !== 'string' || typeof data.componentName !== 'string') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing required fields: html, componentName' }));
           return;
         }
 
+        const rawClasses = Array.isArray(data.cssClasses) ? data.cssClasses : [];
+        const rawStack = Array.isArray(data.componentStack) ? data.componentStack : [];
+
         const context: GrabEntry['context'] = {
-          html: data.html,
-          componentName: data.componentName,
-          filePath: data.filePath ?? null,
-          line: data.line ?? null,
-          column: data.column ?? null,
-          selector: data.selector || '',
-          cssClasses: data.cssClasses || [],
-          componentStack: (data.componentStack || []).map((entry: Record<string, unknown>) => ({
-            name: entry.name || '',
-            filePath: entry.filePath ?? null,
-            line: entry.line ?? null,
-            column: entry.column ?? null,
-          })),
+          html: truncateString(data.html, MAX_HTML_LEN),
+          componentName: truncateString(data.componentName, MAX_STRING_LEN),
+          filePath: nullableString(data.filePath, MAX_STRING_LEN),
+          line: safeInt(data.line),
+          column: safeInt(data.column),
+          selector: truncateString(data.selector, MAX_STRING_LEN),
+          cssClasses: rawClasses
+            .slice(0, MAX_CSS_CLASSES)
+            .map((c: unknown) => truncateString(c, MAX_STRING_LEN))
+            .filter((c: string) => c.length > 0),
+          componentStack: rawStack
+            .slice(0, MAX_STACK_DEPTH)
+            .map((entry: unknown) => {
+              const e = (entry && typeof entry === 'object' ? entry : {}) as Record<string, unknown>;
+              return {
+                name: truncateString(e.name, MAX_STRING_LEN),
+                filePath: nullableString(e.filePath, MAX_STRING_LEN),
+                line: safeInt(e.line),
+                column: safeInt(e.column),
+              };
+            }),
         };
 
-        await addGrab(context, data.snippet || '');
+        const snippet = truncateString(data.snippet, MAX_SNIPPET_LEN);
+        await addGrab(context, snippet);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true }));
 
-        console.error(`Grabbed: ${data.componentName} at ${data.filePath ?? 'unknown'}:${data.line ?? '?'}`);
+        console.error(
+          `Grabbed: ${sanitizeForLog(context.componentName)} at ${sanitizeForLog(context.filePath ?? 'unknown')}:${context.line ?? '?'}`,
+        );
       } catch (error) {
-        console.error('Failed to process grab:', error);
+        console.error('Failed to process grab:', sanitizeForLog(error instanceof Error ? error.message : 'unknown error'));
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal server error' }));
       }
@@ -215,8 +330,8 @@ function startWebhookServer(port: number): void {
     }
   });
 
-  httpServer.listen(port, () => {
-    console.error(`Webhook listener on http://localhost:${port}/grab`);
+  httpServer.listen(port, host, () => {
+    console.error(`Webhook listener on http://${host}:${port}/grab`);
   });
 }
 
@@ -449,13 +564,18 @@ async function main() {
   }
 
   const webhookPort = parseInt(
-    process.env.ANGULAR_GRAB_PORT || String(DEFAULT_WEBHOOK_PORT)
+    process.env.ANGULAR_GRAB_PORT || String(DEFAULT_WEBHOOK_PORT),
+    10,
   );
+
+  // Bind to loopback by default so arbitrary LAN hosts can't POST grabs.
+  // Containerized deployments opt in with ANGULAR_GRAB_HOST=0.0.0.0.
+  const webhookHost = process.env.ANGULAR_GRAB_HOST || DEFAULT_WEBHOOK_HOST;
 
   await ensureHistoryFile();
 
   // Start HTTP listener for incoming grabs from the browser
-  startWebhookServer(webhookPort);
+  startWebhookServer(webhookPort, webhookHost);
 
   // Start MCP stdio transport for agent queries
   const transport = new StdioServerTransport();
