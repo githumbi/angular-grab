@@ -8,7 +8,6 @@ import type {
   HistoryContext,
   HistoryEntry,
   ThemeMode,
-  PendingAction,
 } from './types';
 import { createStore } from './store';
 import { createOverlayRenderer } from './overlay/overlay-renderer';
@@ -16,15 +15,14 @@ import { createCrosshair } from './overlay/crosshair';
 import { showToast, disposeToast } from './overlay/toast';
 import { createElementPicker } from './picker/element-picker';
 import { createKeyboardHandler, isMac } from './keyboard/keyboard-handler';
-import { copyElement, buildElementContext } from './clipboard/copy';
+import { buildElementContext } from './clipboard/copy';
 import { createPluginRegistry } from './plugins/plugin-registry';
 import { createMcpWebhookPlugin } from './plugins/mcp-webhook-plugin';
 import { createThemeManager } from './toolbar/theme-manager';
 import { createToolbarRenderer } from './toolbar/toolbar-renderer';
 import { createHistoryPopover } from './toolbar/history-popover';
-import { createActionsMenu } from './toolbar/actions-menu';
 import { createCommentPopover } from './toolbar/comment-popover';
-import { copyElementSnippet, copyElementHtml, copyElementStyles, buildCommentSnippet, formatMultiSessionClipboard } from './toolbar/copy-actions';
+import { buildCommentSnippet, formatMultiSessionClipboard } from './toolbar/copy-actions';
 import type { GrabSession } from './toolbar/copy-actions';
 import { createFreezeOverlay } from './overlay/freeze-overlay';
 import { showSelectFeedback, disposeFeedbackStyles } from './overlay/select-feedback';
@@ -167,7 +165,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
   function isAnyToolbarElement(el: Element): boolean {
     return toolbar.isToolbarElement(el)
       || historyPopover.isPopoverElement(el)
-      || actionsMenu.isMenuElement(el)
       || commentPopover.isPopoverElement(el)
       || freezeOverlay.isFreezeElement(el);
   }
@@ -189,52 +186,10 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     store.state.toolbar = { ...store.state.toolbar, history };
   }
 
-  /** Returns the live Element if it's still connected to the DOM. */
-  function getLastSelectedElement(): Element | null {
-    const el = lastSelectedElement?.deref() ?? null;
-    if (el && !el.isConnected) {
-      lastSelectedElement = null;
-      lastSelectedContext = null;
-      return null;
-    }
-    return el;
-  }
-
   // --- Close all popovers ---
   function closeAllPopovers(): void {
     historyPopover.hide();
-    actionsMenu.hide();
     commentPopover.hide();
-  }
-
-  // --- Pending action execution ---
-  async function executePendingAction(pending: PendingAction, element: Element): Promise<void> {
-    const context = buildElementContext(element, componentResolver, sourceResolver);
-    const maxLines = store.state.options.maxContextLines;
-
-    lastSelectedElement = new WeakRef(element);
-    lastSelectedContext = context;
-    store.state.toolbar = { ...store.state.toolbar, pendingAction: null };
-
-    switch (pending.type) {
-      case 'copy-element': {
-        const ok = await copyElementSnippet(context, maxLines, pluginRegistry);
-        if (ok) {
-          showSelectFeedback(element);
-          addHistoryEntry(context, '');
-        }
-        break;
-      }
-      case 'copy-styles':
-        await copyElementStyles(element);
-        break;
-      case 'copy-html':
-        await copyElementHtml(context, pluginRegistry);
-        break;
-      case 'comment':
-        commentPopover.show();
-        return; // Don't deactivate — user still needs to type
-    }
   }
 
   // --- Picker ---
@@ -252,22 +207,11 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       }
     },
     async onSelect(element) {
-      const pending = store.state.toolbar.pendingAction;
-
-      if (pending) {
-        await executePendingAction(pending, element);
-        if (pending.type !== 'comment') {
-          doDeactivate();
-        }
-        return;
-      }
-
-      // Build context then wait for comment before copying
       const context = buildElementContext(element, componentResolver, sourceResolver);
       lastSelectedElement = new WeakRef(element);
       lastSelectedContext = context;
       showSelectFeedback(element);
-      toolbar.showCommentInput(element);
+      commentPopover.show({ anchor: element, mode: 'new' });
     },
   });
 
@@ -298,7 +242,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     store.state.active = false;
     store.state.frozen = false;
     freezeOverlay.hide();
-    store.state.toolbar = { ...store.state.toolbar, pendingAction: null };
     picker.deactivate();
     pluginRegistry.callHook('onDeactivate');
     toolbar.update(store.state);
@@ -326,39 +269,12 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     },
 
     onHistory() {
-      actionsMenu.hide();
       commentPopover.hide();
       if (historyPopover.isVisible()) {
         historyPopover.hide();
       } else {
         historyPopover.show([...store.state.toolbar.history]);
       }
-    },
-
-    onActions() {
-      historyPopover.hide();
-      commentPopover.hide();
-      if (actionsMenu.isVisible()) {
-        actionsMenu.hide();
-      } else {
-        actionsMenu.show();
-      }
-    },
-
-    onFreeze() {
-      closeAllPopovers();
-      if (!store.state.active) {
-        doActivate();
-      }
-      toggleFreeze();
-    },
-
-    onThemeToggle() {
-      const current = store.state.toolbar.themeMode;
-      const newMode: ThemeMode = current === 'dark' ? 'light' : current === 'light' ? 'system' : 'dark';
-      store.state.toolbar = { ...store.state.toolbar, themeMode: newMode };
-      themeManager.apply(newMode);
-      toolbar.update(store.state);
     },
 
     onEnableToggle() {
@@ -376,19 +292,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       doDeactivate(true);
       store.state.toolbar = { ...store.state.toolbar, visible: false };
       toolbar.hide();
-    },
-
-    async onCommentSubmit(comment: string) {
-      if (lastSelectedContext) {
-        await accumulateAndCopy(lastSelectedContext, comment);
-      }
-      toolbar.hideCommentInput();
-      doDeactivate();
-    },
-
-    onCommentCancel() {
-      toolbar.hideCommentInput();
-      doDeactivate();
     },
   });
 
@@ -411,67 +314,30 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     },
   });
 
-  // --- Actions Menu ---
-  const actionsMenu = createActionsMenu({
-    onCopyElement() {
-      if (lastSelectedContext) {
-        copyElementSnippet(lastSelectedContext, store.state.options.maxContextLines, pluginRegistry);
-      } else {
-        store.state.toolbar = { ...store.state.toolbar, pendingAction: { type: 'copy-element' } };
-        doActivate();
-      }
-    },
-
-    onCopyStyles() {
-      const el = getLastSelectedElement();
-      if (el) {
-        copyElementStyles(el);
-      } else {
-        store.state.toolbar = { ...store.state.toolbar, pendingAction: { type: 'copy-styles' } };
-        doActivate();
-      }
-    },
-
-    onCopyHtml() {
-      if (lastSelectedContext) {
-        copyElementHtml(lastSelectedContext, pluginRegistry);
-      } else {
-        store.state.toolbar = { ...store.state.toolbar, pendingAction: { type: 'copy-html' } };
-        doActivate();
-      }
-    },
-
-    onComment() {
-      if (lastSelectedContext) {
-        commentPopover.show();
-      } else {
-        store.state.toolbar = { ...store.state.toolbar, pendingAction: { type: 'comment' } };
-        doActivate();
-      }
-    },
-
-    onClearHistory() {
-      lastSelectedContext = null;
-      lastSelectedElement = null;
-      grabSessions = [];
-      store.state.toolbar = { ...store.state.toolbar, history: [] };
-    },
-  });
-
   // --- Comment Popover ---
   const commentPopover = createCommentPopover({
-    async onSubmit(comment: string) {
-      if (lastSelectedContext) {
-        await accumulateAndCopy(lastSelectedContext, comment);
-      }
-      if (store.state.active) {
+    async onSubmit(value, ctx) {
+      if (ctx.mode === 'new') {
+        if (lastSelectedContext) {
+          await accumulateAndCopy(lastSelectedContext, value);
+        }
         doDeactivate();
+        return;
       }
+      if (!ctx.entryId) return;
+      const history = store.state.toolbar.history.map((e) =>
+        e.id === ctx.entryId ? { ...e, comment: value } : e
+      );
+      store.state.toolbar = { ...store.state.toolbar, history };
+      showToast('Comment updated');
+      historyPopover.show([...history]);
     },
-    onCancel() {
-      if (store.state.active) {
+    onCancel(ctx) {
+      if (ctx.mode === 'new') {
         doDeactivate();
+        return;
       }
+      historyPopover.show([...store.state.toolbar.history]);
     },
   });
 
@@ -479,11 +345,8 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
   function handleDocumentClick(e: MouseEvent): void {
     const target = e.target as Element | null;
     if (!target) return;
-
     if (isAnyToolbarElement(target)) return;
-
-    // Close popovers if click is outside toolbar UI
-    if (historyPopover.isVisible() || actionsMenu.isVisible() || commentPopover.isVisible()) {
+    if (historyPopover.isVisible() || commentPopover.isVisible()) {
       closeAllPopovers();
     }
   }
@@ -619,7 +482,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       closeAllPopovers();
       toolbar.dispose();
       historyPopover.dispose();
-      actionsMenu.dispose();
       commentPopover.dispose();
       themeManager.dispose();
       document.documentElement.style.removeProperty('--ag-toast-bottom');

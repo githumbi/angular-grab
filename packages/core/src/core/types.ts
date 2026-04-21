@@ -1,11 +1,5 @@
 export type ThemeMode = 'light';
 
-export type PendingAction =
-  | { type: 'copy-element' }
-  | { type: 'copy-styles' }
-  | { type: 'copy-html' }
-  | { type: 'comment' };
-
 /** Serializable subset of ElementContext — no live DOM reference. */
 export interface HistoryContext {
   html: string;
@@ -30,7 +24,6 @@ export interface ToolbarState {
   visible: boolean;
   themeMode: ThemeMode;
   history: HistoryEntry[];
-  pendingAction: PendingAction | null;
 }
 
 export interface AngularGrabOptions {

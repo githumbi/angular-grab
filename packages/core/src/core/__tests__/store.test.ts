@@ -31,7 +31,6 @@ describe('createStore', () => {
     expect(store.state.toolbar.visible).toBe(true);
     expect(store.state.toolbar.themeMode).toBe('light');
     expect(store.state.toolbar.history).toEqual([]);
-    expect(store.state.toolbar.pendingAction).toBeNull();
   });
 
   it('respects showToolbar=false in options', () => {

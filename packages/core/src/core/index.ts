@@ -13,7 +13,6 @@ export type {
   HistoryContext,
   HistoryEntry,
   ToolbarState,
-  PendingAction,
   ComponentResolver,
   SourceResolver,
 } from './types';

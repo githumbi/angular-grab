@@ -27,7 +27,6 @@ export function createStore(initialOptions: AngularGrabOptions): Store {
       visible: initialOptions.showToolbar,
       themeMode: initialOptions.themeMode,
       history: [],
-      pendingAction: null,
     },
   };
 
