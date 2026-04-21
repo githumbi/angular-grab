@@ -337,9 +337,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       lastSelectedElement = null;
       grabSessions = [];
       store.state.toolbar = { ...store.state.toolbar, history: [] };
-      if (store.state.options.persistHistory) {
-        clearPersistedHistory();
-      }
       showToast('History cleared');
       historyPopover.hide();
     },
@@ -514,9 +511,6 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       lastSelectedElement = null;
       grabSessions = [];
       store.state.toolbar = { ...store.state.toolbar, history: [] };
-      if (store.state.options.persistHistory) {
-        clearPersistedHistory();
-      }
     },
 
     dispose(): void {
@@ -563,7 +557,11 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     if (key === 'toolbar') {
       updateToastOffset();
       if (state.options.persistHistory) {
-        saveHistory(state.toolbar.history);
+        if (state.toolbar.history.length > 0) {
+          saveHistory(state.toolbar.history);
+        } else {
+          clearPersistedHistory();
+        }
       }
     }
   });

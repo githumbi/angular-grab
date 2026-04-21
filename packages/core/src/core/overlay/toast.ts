@@ -28,7 +28,7 @@ function injectToastStyles(): void {
       transform: translateX(-50%) translateY(100%);
       z-index: ${Z_INDEX_TOAST};
       background: var(--ag-toast-bg, #ffffff);
-      color: var(--ag-toast-text, #e2e8f0);
+      color: var(--ag-toast-text, #334155);
       font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 12px 18px;
       border-radius: 10px;
@@ -57,7 +57,7 @@ function injectToastStyles(): void {
     }
     #${TOAST_ID} .ag-toast-title {
       font-weight: 600;
-      color: var(--ag-toast-title, #fff);
+      color: var(--ag-toast-title, #334155);
     }
     #${TOAST_ID} .ag-toast-details {
       margin-top: 8px;
@@ -78,13 +78,13 @@ function injectToastStyles(): void {
       min-width: 72px;
     }
     #${TOAST_ID} .ag-toast-value {
-      color: var(--ag-toast-text, #e2e8f0);
+      color: var(--ag-toast-text, #334155);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     #${TOAST_ID} .ag-toast-file-link {
-      color: var(--ag-toast-text, #e2e8f0);
+      color: var(--ag-toast-text, #334155);
       text-decoration: none;
       overflow: hidden;
       text-overflow: ellipsis;
