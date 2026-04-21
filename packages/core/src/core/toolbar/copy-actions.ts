@@ -2,7 +2,6 @@ import type { ElementContext } from '../types';
 import type { PluginRegistry } from '../plugins/plugin-registry';
 import { generateSnippet } from '../clipboard/generate-snippet';
 import { showToast } from '../overlay/toast';
-import { cleanAngularAttrs } from '../utils';
 
 const MAX_SNIPPET_CHARS = 2000;
 
@@ -56,53 +55,6 @@ export async function copyElementSnippet(
   const ok = await writeAndToast(snippet, 'Copied to clipboard', context);
   if (ok) pluginRegistry?.callHook('onCopySuccess', snippet, context, undefined);
   return ok;
-}
-
-export async function copyElementHtml(
-  context: ElementContext,
-  pluginRegistry?: PluginRegistry,
-): Promise<boolean> {
-  const cleaned = truncateSnippet(cleanAngularAttrs(context.html));
-  const ok = await writeAndToast(cleaned, 'HTML copied to clipboard', context);
-  if (ok) pluginRegistry?.callHook('onCopySuccess', cleaned, context, undefined);
-  return ok;
-}
-
-export async function copyElementStyles(element: Element): Promise<boolean> {
-  if (!element.isConnected) {
-    showToast('Element is no longer on the page');
-    return false;
-  }
-
-  const computed = window.getComputedStyle(element);
-  const tag = element.tagName.toLowerCase();
-  const lines: string[] = [`/* Computed styles for <${tag}> */`, `${tag} {`];
-
-  const props = [
-    'display', 'position', 'top', 'right', 'bottom', 'left',
-    'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height',
-    'margin', 'padding',
-    'border', 'border-radius',
-    'background', 'background-color',
-    'color', 'font', 'font-size', 'font-weight', 'font-family', 'line-height',
-    'text-align', 'text-decoration', 'text-transform',
-    'opacity', 'overflow', 'z-index',
-    'flex-direction', 'justify-content', 'align-items', 'gap',
-    'grid-template-columns', 'grid-template-rows',
-    'box-shadow', 'cursor', 'transition', 'transform',
-  ];
-
-  for (const prop of props) {
-    const value = computed.getPropertyValue(prop);
-    if (value && value !== 'none' && value !== 'normal' && value !== 'auto' && value !== '0px' && value !== 'visible') {
-      lines.push(`  ${prop}: ${value};`);
-    }
-  }
-
-  lines.push('}');
-  const css = lines.join('\n');
-
-  return writeAndToast(css, 'Styles copied to clipboard');
 }
 
 export async function copyWithComment(
