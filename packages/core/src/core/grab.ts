@@ -392,6 +392,24 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
   }
   document.addEventListener('keydown', handleFreezeKey, true);
 
+  // --- Escape-to-deactivate when no popover is open ---
+  function handleEscapeKey(e: KeyboardEvent): void {
+    if (e.key !== 'Escape') return;
+    if (!store.state.active) return;
+    const tag = (e.target as Element | null)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if ((e.target as HTMLElement | null)?.isContentEditable) return;
+    if (commentPopover.isVisible()) return;
+    if (historyPopover.isVisible()) {
+      historyPopover.hide();
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    doDeactivate(true);
+  }
+  document.addEventListener('keydown', handleEscapeKey, true);
+
   // --- Keyboard handler ---
   const keyboard = createKeyboardHandler({
     getActivationKey: () => store.state.options.activationKey,
@@ -485,6 +503,7 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       doDeactivate();
       document.removeEventListener('click', handleDocumentClick);
       document.removeEventListener('keydown', handleFreezeKey, true);
+      document.removeEventListener('keydown', handleEscapeKey, true);
       keyboard.dispose();
       picker.dispose();
       overlay.dispose();
