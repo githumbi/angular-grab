@@ -27,6 +27,7 @@ import type { GrabSession } from './toolbar/copy-actions';
 import { createFreezeOverlay } from './overlay/freeze-overlay';
 import { showSelectFeedback, disposeFeedbackStyles } from './overlay/select-feedback';
 import { TOOLBAR_TOAST_OFFSET } from './constants';
+import { loadHistory, saveHistory, clearPersistedHistory, flushPendingWrite } from './storage/history-persistence';
 
 const MAX_HISTORY = 50;
 
@@ -105,6 +106,15 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
   }
 
   const store = createStore(merged);
+
+  // Seed history from localStorage (if enabled)
+  if (merged.persistHistory) {
+    const persisted = loadHistory();
+    if (persisted.length > 0) {
+      store.state.toolbar = { ...store.state.toolbar, history: persisted };
+    }
+  }
+
   const overlay = createOverlayRenderer();
   const crosshair = createCrosshair();
   const freezeOverlay = createFreezeOverlay();
@@ -465,9 +475,13 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
       lastSelectedElement = null;
       grabSessions = [];
       store.state.toolbar = { ...store.state.toolbar, history: [] };
+      if (store.state.options.persistHistory) {
+        clearPersistedHistory();
+      }
     },
 
     dispose(): void {
+      flushPendingWrite();
       doDeactivate();
       document.removeEventListener('click', handleDocumentClick);
       document.removeEventListener('keydown', handleFreezeKey, true);
@@ -508,6 +522,9 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
     }
     if (key === 'toolbar') {
       updateToastOffset();
+      if (state.options.persistHistory) {
+        saveHistory(state.toolbar.history);
+      }
     }
   });
 
