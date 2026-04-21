@@ -55,8 +55,9 @@ function getDefaultOptions(): AngularGrabOptions {
     enableInInputs: false,
     devOnly: true,
     showToolbar: true,
-    themeMode: 'dark',
+    themeMode: 'light',
     mcpWebhook: true,
+    persistHistory: true,
   };
 }
 

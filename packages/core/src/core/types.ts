@@ -1,4 +1,4 @@
-export type ThemeMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'light';
 
 export type PendingAction =
   | { type: 'copy-element' }
@@ -50,10 +50,12 @@ export interface AngularGrabOptions {
   devOnly: boolean;
   /** Show the floating mini toolbar. Default: true */
   showToolbar: boolean;
-  /** Theme mode for all UI. Default: 'dark' */
+  /** Theme mode for all UI. Default: 'light' */
   themeMode: ThemeMode;
   /** Auto-register MCP webhook plugin to POST grabs to localhost:3456. Default: true */
   mcpWebhook: boolean;
+  /** Persist history across page refresh via localStorage. Default: true */
+  persistHistory: boolean;
 }
 
 export interface ComponentStackEntry {

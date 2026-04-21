@@ -12,7 +12,9 @@ function makeOptions(overrides: Partial<AngularGrabOptions> = {}): AngularGrabOp
     enableInInputs: false,
     devOnly: true,
     showToolbar: true,
-    themeMode: 'dark',
+    themeMode: 'light',
+    mcpWebhook: false,
+    persistHistory: false,
     ...overrides,
   };
 }
@@ -27,7 +29,7 @@ describe('createStore', () => {
     expect(store.state.hoveredElement).toBeNull();
     expect(store.state.options).toBe(opts);
     expect(store.state.toolbar.visible).toBe(true);
-    expect(store.state.toolbar.themeMode).toBe('dark');
+    expect(store.state.toolbar.themeMode).toBe('light');
     expect(store.state.toolbar.history).toEqual([]);
     expect(store.state.toolbar.pendingAction).toBeNull();
   });
@@ -35,11 +37,6 @@ describe('createStore', () => {
   it('respects showToolbar=false in options', () => {
     const store = createStore(makeOptions({ showToolbar: false }));
     expect(store.state.toolbar.visible).toBe(false);
-  });
-
-  it('respects themeMode in options', () => {
-    const store = createStore(makeOptions({ themeMode: 'light' }));
-    expect(store.state.toolbar.themeMode).toBe('light');
   });
 
   it('notifies listeners on state changes', () => {
