@@ -66,10 +66,10 @@ The output includes the cleaned HTML, the full Angular component stack trace, an
 - **Element selection** via keyboard shortcut or floating toolbar
 - **Component stack trace** -- full Angular component ancestor chain with file paths
 - **Open in VS Code** -- click file paths in the toast to open at the exact line
-- **Freeze mode** -- freeze the page to grab tooltips, dropdowns, and hover menus
-- **Floating toolbar** with selection, history, actions, freeze, theme, and enable controls
-- **History** of previously grabbed elements with one-click re-copy
-- **Dark / light / system theme** for all UI
+- **Freeze mode** -- press **F** during selection to freeze the page and grab tooltips, dropdowns, and hover menus
+- **Floating toolbar** with selection, history, and enable controls
+- **History** of previously grabbed elements with one-click re-copy; persists across page refreshes via localStorage
+- **Light-only theme** for all UI
 - **Plugin system** for custom actions, hooks, and theme overrides
 - **Crosshair guidelines** during selection mode
 - **Zero production impact** -- automatically disabled outside dev mode
@@ -95,23 +95,23 @@ provideAngularGrab({
   enableInInputs: false,         // Allow in input/textarea
   devOnly: true,                 // Only active in dev mode
   showToolbar: true,             // Show floating toolbar
-  themeMode: 'dark',             // 'dark' | 'light' | 'system'
+  themeMode: 'light',            // only 'light' is supported
+  persistHistory: true,          // persist history across page refresh
 });
 ```
 
 ## Toolbar
 
-The floating toolbar provides quick access to all features without keyboard shortcuts:
+The floating toolbar provides quick access to core features without keyboard shortcuts:
 
 | Button | Action |
 |--------|--------|
 | Hand | Toggle selection mode |
-| Clock | Show grab history |
-| Ellipsis | Actions menu (Copy Element, Copy Styles, Copy HTML, Comment, Clear History) |
-| Snowflake | Toggle freeze mode |
-| Sun/Moon | Cycle theme (dark / light / system) |
+| Clock | Show grab history (one-click re-copy, clear all) |
 | Power | Enable/disable angular-grab |
 | X | Dismiss toolbar |
+
+The grab flow is: hover → click → enter a comment → copy. Past grabs are listed in the history popover (clock icon) where you can re-copy (Copy all), clear them (Clear all), or click any entry to edit its comment.
 
 Dismissing the toolbar doesn't disable angular-grab -- keyboard shortcuts still work, and activating selection mode brings the toolbar back.
 
@@ -173,7 +173,6 @@ import { ANGULAR_GRAB_API } from '@githumbi/angular-grab/angular';
 
 const api = inject(ANGULAR_GRAB_API);
 api.activate();
-api.setThemeMode('light');
 ```
 
 ### `AngularGrabAPI`
@@ -191,7 +190,7 @@ api.setThemeMode('light');
 | `setSourceResolver(fn)` | Custom source file resolver |
 | `showToolbar()` | Show the floating toolbar |
 | `hideToolbar()` | Hide the floating toolbar |
-| `setThemeMode(mode)` | Set theme ('dark', 'light', 'system') |
+| `setThemeMode(mode)` | Retained for API compatibility; library is light-only |
 | `getHistory()` | Get grab history entries |
 | `clearHistory()` | Clear grab history |
 | `dispose()` | Clean up everything |
