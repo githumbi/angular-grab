@@ -14,7 +14,9 @@ export interface HistoryPopover {
 }
 
 export interface HistoryPopoverCallbacks {
-  onEntryClick: (entry: HistoryEntry) => void;
+  onEntryClick: (entry: HistoryEntry, rowEl: HTMLElement) => void;
+  onEntryHover: (entry: HistoryEntry | null) => void;
+  onClearAll: () => void;
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -58,10 +60,10 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         left: 50%;
         transform: translateX(-50%);
         z-index: ${Z_INDEX_POPOVER};
-        background: var(--ag-popover-bg, #0f172a);
-        border: 1px solid var(--ag-popover-border, #1e293b);
+        background: var(--ag-popover-bg, #ffffff);
+        border: 1px solid var(--ag-popover-border, #e2e8f0);
         border-radius: 12px;
-        box-shadow: 0 8px 24px var(--ag-popover-shadow, rgba(0, 0, 0, 0.5));
+        box-shadow: 0 8px 24px var(--ag-popover-shadow, rgba(0, 0, 0, 0.12));
         min-width: 320px;
         max-width: 420px;
         max-height: 360px;
@@ -86,16 +88,16 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         text-transform: uppercase;
         letter-spacing: 0.05em;
         color: var(--ag-text-muted, #64748b);
-        border-bottom: 1px solid var(--ag-popover-border, #1e293b);
+        border-bottom: 1px solid var(--ag-popover-border, #e2e8f0);
       }
       #${POPOVER_ID} .ag-history-copy-all {
         font-size: 11px;
         font-weight: 500;
         text-transform: none;
         letter-spacing: 0;
-        color: var(--ag-accent, #3b82f6);
+        color: var(--ag-accent, #2563eb);
         background: transparent;
-        border: 1px solid var(--ag-accent, #3b82f6);
+        border: 1px solid var(--ag-accent, #2563eb);
         border-radius: 6px;
         padding: 2px 8px;
         cursor: pointer;
@@ -104,7 +106,7 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         font-family: inherit;
       }
       #${POPOVER_ID} .ag-history-copy-all:hover {
-        background: var(--ag-accent, #3b82f6);
+        background: var(--ag-accent, #2563eb);
         color: #fff;
       }
       #${POPOVER_ID} .ag-history-empty {
@@ -121,7 +123,7 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         padding: 8px 14px;
         cursor: pointer;
         border: none;
-        border-bottom: 1px solid var(--ag-popover-border, #1e293b);
+        border-bottom: 1px solid var(--ag-popover-border, #e2e8f0);
         background: transparent;
         width: 100%;
         text-align: left;
@@ -133,7 +135,7 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         border-bottom: none;
       }
       #${POPOVER_ID} .ag-history-item:hover {
-        background: var(--ag-popover-hover, #1e293b);
+        background: var(--ag-popover-hover, #f1f5f9);
       }
       #${POPOVER_ID} .ag-history-info {
         flex: 1;
@@ -142,7 +144,7 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
       #${POPOVER_ID} .ag-history-comment-title {
         font-size: 13px;
         font-weight: 500;
-        color: var(--ag-accent, #3b82f6);
+        color: var(--ag-accent, #2563eb);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -174,7 +176,34 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
       }
       #${POPOVER_ID} .ag-history-file-link:hover {
         text-decoration: underline;
-        color: var(--ag-accent, #3b82f6);
+        color: var(--ag-accent, #2563eb);
+      }
+      #${POPOVER_ID} .ag-history-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      #${POPOVER_ID} .ag-history-clear-all {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--ag-text-muted, #94a3b8);
+        background: transparent;
+        border: 1px solid var(--ag-popover-border, #e2e8f0);
+        border-radius: 6px;
+        padding: 2px 8px;
+        cursor: pointer;
+        line-height: 1.5;
+        transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+        font-family: inherit;
+      }
+      #${POPOVER_ID} .ag-history-clear-all:hover {
+        color: var(--ag-accent, #2563eb);
+        border-color: var(--ag-accent, #2563eb);
+      }
+      #${POPOVER_ID} .ag-history-item-missing {
+        opacity: 0.6;
       }
     `;
     document.head.appendChild(style);
@@ -195,8 +224,8 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
   function render(entries: HistoryEntry[]): void {
     const el = ensurePopover();
 
-    const hasCopyAll = entries.length > 0;
-    let html = `<div class="ag-history-header"><span>History</span>${hasCopyAll ? '<button class="ag-history-copy-all" data-ag-copy-all>Copy all</button>' : ''}</div>`;
+    const hasActions = entries.length > 0;
+    let html = `<div class="ag-history-header"><span>History</span>${hasActions ? `<span class="ag-history-actions"><button class="ag-history-clear-all" data-ag-clear-all>Clear all</button><button class="ag-history-copy-all" data-ag-copy-all>Copy all</button></span>` : ''}</div>`;
 
     if (entries.length === 0) {
       html += '<div class="ag-history-empty">No elements grabbed yet</div>';
@@ -214,7 +243,7 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
         }
 
         const ariaLabel = entry.comment ? escapeHtml(entry.comment) : selector;
-        html += `<button class="ag-history-item" data-ag-history-id="${escapeHtml(entry.id)}" aria-label="Re-copy ${ariaLabel}">`;
+        html += `<button class="ag-history-item" data-ag-history-id="${escapeHtml(entry.id)}" aria-label="Edit comment for ${ariaLabel}">`;
         html += `<div class="ag-history-info">`;
         if (entry.comment) {
           html += `<div class="ag-history-comment-title">${escapeHtml(entry.comment)}</div>`;
@@ -229,16 +258,21 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
 
     el.innerHTML = html;
 
-    // Attach click handlers
-    const items = el.querySelectorAll('.ag-history-item');
+    const items = el.querySelectorAll<HTMLElement>('.ag-history-item');
     items.forEach((item) => {
+      const id = item.dataset.agHistoryId;
+      const entry = entries.find((e) => e.id === id);
+      if (!entry) return;
+
+      if (!document.querySelector(entry.context.selector)) {
+        item.classList.add('ag-history-item-missing');
+      }
+
+      item.addEventListener('mouseenter', () => callbacks.onEntryHover(entry));
+      item.addEventListener('mouseleave', () => callbacks.onEntryHover(null));
       item.addEventListener('click', (e) => {
         e.stopPropagation();
-        const id = (item as HTMLElement).dataset.agHistoryId;
-        const entry = entries.find((ent) => ent.id === id);
-        if (entry) {
-          callbacks.onEntryClick(entry);
-        }
+        callbacks.onEntryClick(entry, item);
       });
     });
 
@@ -253,6 +287,14 @@ export function createHistoryPopover(callbacks: HistoryPopoverCallbacks): Histor
           btn.textContent = 'Copied!';
           setTimeout(() => { btn.textContent = prev; }, 1500);
         });
+      });
+    }
+
+    const clearAllBtn = el.querySelector('[data-ag-clear-all]');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        callbacks.onClearAll();
       });
     }
   }

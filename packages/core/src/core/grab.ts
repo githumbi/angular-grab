@@ -307,20 +307,41 @@ export function createGrabInstance(options?: Partial<AngularGrabOptions>): Angul
 
   // --- History Popover ---
   const historyPopover = createHistoryPopover({
-    async onEntryClick(entry: HistoryEntry) {
-      historyPopover.hide();
-      try {
-        await navigator.clipboard.writeText(entry.snippet);
-        showToast('Re-copied to clipboard', {
-          componentName: entry.context.componentName,
-          filePath: entry.context.filePath,
-          line: entry.context.line,
-          column: entry.context.column,
-          cssClasses: entry.context.cssClasses,
-        });
-      } catch {
-        showToast('Failed to copy to clipboard');
+    onEntryHover(entry) {
+      if (!entry) {
+        overlay.hide();
+        return;
       }
+      const el = document.querySelector(entry.context.selector);
+      if (el) {
+        overlay.show(el, entry.context.componentName, null, entry.context.cssClasses);
+      } else {
+        overlay.hide();
+      }
+    },
+
+    onEntryClick(entry, rowEl) {
+      const el = document.querySelector(entry.context.selector);
+      const anchor = el ?? rowEl;
+      historyPopover.hide();
+      commentPopover.show({
+        anchor,
+        initialValue: entry.comment ?? '',
+        mode: 'edit',
+        entryId: entry.id,
+      });
+    },
+
+    onClearAll() {
+      lastSelectedContext = null;
+      lastSelectedElement = null;
+      grabSessions = [];
+      store.state.toolbar = { ...store.state.toolbar, history: [] };
+      if (store.state.options.persistHistory) {
+        clearPersistedHistory();
+      }
+      showToast('History cleared');
+      historyPopover.hide();
     },
   });
 
