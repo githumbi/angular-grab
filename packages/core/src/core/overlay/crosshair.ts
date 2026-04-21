@@ -26,7 +26,7 @@ export function createCrosshair(): Crosshair {
         position: fixed;
         pointer-events: none;
         z-index: ${Z_INDEX_CROSSHAIR};
-        background: var(--ag-accent, #3b82f6);
+        background: var(--ag-accent, #2563eb);
         opacity: 0.25;
         transition: none;
       }

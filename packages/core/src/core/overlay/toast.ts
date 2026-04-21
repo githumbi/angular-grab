@@ -27,12 +27,12 @@ function injectToastStyles(): void {
       left: 50%;
       transform: translateX(-50%) translateY(100%);
       z-index: ${Z_INDEX_TOAST};
-      background: var(--ag-toast-bg, #0f172a);
+      background: var(--ag-toast-bg, #ffffff);
       color: var(--ag-toast-text, #e2e8f0);
       font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       padding: 12px 18px;
       border-radius: 10px;
-      box-shadow: 0 8px 24px var(--ag-toast-shadow, rgba(0, 0, 0, 0.4));
+      box-shadow: 0 8px 24px var(--ag-toast-shadow, rgba(0, 0, 0, 0.12));
       pointer-events: none;
       opacity: 0;
       transition: transform 0.25s ease, opacity 0.25s ease;
@@ -94,7 +94,7 @@ function injectToastStyles(): void {
     }
     #${TOAST_ID} .ag-toast-file-link:hover {
       text-decoration: underline;
-      color: var(--ag-accent, #3b82f6);
+      color: var(--ag-accent, #2563eb);
     }
   `;
   document.head.appendChild(style);

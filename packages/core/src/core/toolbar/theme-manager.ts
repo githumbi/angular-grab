@@ -18,7 +18,7 @@ const LIGHT_VARS = `
     --ag-label-text: #fff;
     --ag-toast-bg: #ffffff;
     --ag-toast-text: #334155;
-    --ag-toast-title: #0f172a;
+    --ag-toast-title: #334155;
     --ag-toast-label: #94a3b8;
     --ag-toast-shadow: rgba(0, 0, 0, 0.12);
     --ag-toolbar-bg: #ffffff;
